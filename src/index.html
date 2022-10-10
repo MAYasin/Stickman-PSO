@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.1/p5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.1/addons/p5.sound.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.18.0/matter.min.js"></script>
+    <script src="head.js"></script>
+    <script src="neuralnetwork.js"></script>
+    <script src="box.js"></script>
+    <script src="ragdoll.js"></script>
+    <script src="boundary.js"></script>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <meta charset="utf-8" />
+
+</head>
+
+<body>
+    <main>
+    </main>
+    <script src="sketch.js"></script>
+    <div id="controls">
+        <button title="Reset" onclick="clickReset()">Reset</button>
+
+        <div class="slider-wrapper">
+            <input id="slider" class="slider" type="range" min="10" max="100" value="20" step="10">
+            <h3>Unknown</h3>
+        </div>
+        <button title="Train" onclick="clickTrain()">Train</button>
+        
+        <button id="inference" title="Inference" onclick="clickInference()">Inference</button>
+    </div>
+</body>
+<script src="../reload/reload.js"></script>
+
+</html>

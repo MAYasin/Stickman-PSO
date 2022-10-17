@@ -2,6 +2,13 @@ class NeuralNetwork {
     constructor(neuronCounts) {
         this.layers = [];
 
+        this.pBest = { fitness: 0, network: undefined};
+        this.gBest = { fitness: 0, network: undefined};
+
+        this.inertiaWeight = 0.9;
+        this.cognitveWeight = 0.5;
+        this.socialWeight = 1.5;
+
         for (let i = 0; i < neuronCounts.length - 1; i++) {
             this.layers.push(new Layer(neuronCounts[i], neuronCounts[i + 1]));
         }
@@ -16,39 +23,35 @@ class NeuralNetwork {
         return outputs;
     }
 
-    static mutate(network, mutationRate = 1) {
-        network.layers.forEach(layer => {
-            for (let i = 0; i < layer.biases.length; i++) {
-                if (Math.random() < mutationRate) {
-                    layer.biases[i] = Math.random() * 2 - 1;
+    static scoreUpdate(pNetwork, oNetwork, score) {
+        if (score > pNetwork.pBest.fitness) {
+            pNetwork.pBest.fitness = score;
+            pNetwork.pBest.network = oNetwork;
+        }
+
+        if (score > pNetwork.gBest.fitness) {
+            pNetwork.gBest.fitness = score;
+            pNetwork.gBest.network = oNetwork;
+        }
+        print({ pBest: pNetwork.pBest, gBest: pNetwork.gBest });
+    }
+
+    static velocityUpdate(network) {
+        for(let x = 0; x < network.layers.length; x++) {
+            for (let i = 0; i < network.layers[x].velocity.length; i++) {
+                for (let j = 0; j < network.layers[x].velocity[i].length; j++) {
+                    network.layers[x].velocity[i][j] = (network.layers[x].velocity[i][j] * network.inertiaWeight) + (network.cognitveWeight*Math.random()*(network.pBest.network.layers[x].weights[i][j] - network.layers[x].weights[i][j])) + (network.socialWeight*Math.random()*(network.gBest.network.layers[x].weights[i][j]- network.layers[x].weights[i][j]));
                 }
             }
-            for (let i = 0; i < layer.weights.length; i++) {
-                for (let j = 0; j < layer.weights[i].length; j++) {
+
+            for (let i = 0; i < network.layers[x].weights.length; i++) {
+                for (let j = 0; j < network.layers[x].weights[i].length; j++) {
                     if (Math.random() < mutationRate) {
-                        layer.weights[i][j] = Math.random() * 2 - 1;
+                        network.layers[x].weights[i][j] = network.layers[x].weights[i][j] + network.layers[x].velocity[i][j];
                     }
                 }
             }
-        });
-    }
-
-    //cross over
-    static crossover(network1, network2) {
-        let newNetwork = network1;
-        newNetwork.layers.forEach((layer, index) => {
-            for (let i = 0; i < layer.biases.length; i++) {
-                if (Math.random() < 0.5) {
-                    layer.biases[i] = network2.layers[index].biases[i];
-                }
-            }
-            for (let i = 0; i < layer.weights.length; i++) {
-                if (Math.random() < 0.5) {
-                    layer.weights[i] = network2.layers[index].weights[i];
-                }
-            }
-        });
-        return newNetwork;
+        }
     }
 }
 
@@ -59,6 +62,17 @@ class Layer {
         this.biases = new Array(outputSize);
 
         this.weights = [];
+        this.velocity = [];
+
+        for (let i = 0; i < inputSize; i++) {
+            this.velocity[i] = new Array(outputSize);
+        }
+
+        for (let i = 0; i < inputSize; i++) {
+            for (let j = 0; j < outputSize; j++) {
+                this.velocity[i][j] = 0;
+            }
+        }
 
         for (let x = 0; x < inputSize; x++) {
             this.weights[x] = new Array(outputSize);
@@ -75,7 +89,7 @@ class Layer {
         }
 
         for (let i = 0; i < layer.biases.length; i++) {
-            layer.biases[i] = Math.random() * 2 - 1;
+            layer.biases[i] = 0;
         }
     }
 

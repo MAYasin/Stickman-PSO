@@ -37,10 +37,6 @@ let logP1 = [];
 let bestStickmanP1;
 let brainModelStorageP1;
 
-let logP2 = [];
-let bestStickmanP2;
-let brainModelStorageP2;
-
 let loadModel;
 
 function generateStickmen(count, time) {
@@ -50,7 +46,6 @@ function generateStickmen(count, time) {
     }
 
     bestStickmanP1 = stickmen[0];
-    bestStickmanP2 = stickmen[0];
     return stickmen;
 }
 
@@ -139,7 +134,6 @@ function draw() {
         if (modetext != "Inference") {
             stickmen.forEach(stickman => stickman.resetTransparency());
             bestStickmanP1 = stickmen.find(s => s.xScore == Math.max(...stickmen.map(s => s.xScore)));
-            bestStickmanP2 = stickmen.find(s => s.yScore == Math.min(...stickmen.map(s => s.yScore)));
 
             bestStickmanP1.setTransparency(255);
 
@@ -163,21 +157,10 @@ function draw() {
                 if (!stoppingAlgo) {
                     stickmen = generateStickmen(slider.value() == 0 ? 2 : slider.value(), new Date());
 
-                    if (brainModelStorageP1 != undefined && brainModelStorageP2 != undefined) {
-                        var stickmenCount = stickmen.length / 2;
+                    if (brainModelStorageP1 != undefined) {
                         stickmen.forEach((element, index) => {
-                            if (index < stickmenCount) {
-                                element.brain = JSON.parse(brainModelStorageP1);
-                                if (index != 0) {
-                                    NeuralNetwork.mutate(element.brain, 0.01);
-                                }
-                            } else {
-                                element.setColor(color(255, 255, 0));
-                                element.brain = NeuralNetwork.crossover(JSON.parse(brainModelStorageP1), JSON.parse(brainModelStorageP2));
-                                if (index != stickmenCount) {
-                                    NeuralNetwork.mutate(element.brain, 0.01);
-                                }
-                            }
+                            NeuralNetwork.scoreUpdate(JSON.parse(brainModelStorageP1), bestStickmanP1.xScore);
+                            NeuralNetwork.velocityUpdate(element.brain);
                         });
                     }
                 } else {
@@ -189,7 +172,7 @@ function draw() {
                     discardModel();
                 }
             }
-        }else{
+        } else {
             stickmen[0].update();
             if (stickmen[0].xScore > 950) {
                 stickmen[0].dead = true;
@@ -218,15 +201,12 @@ function draw() {
 //html utils
 function saveModel() {
     brainModelStorageP1 = JSON.stringify(bestStickmanP1.brain);
-    brainModelStorageP2 = JSON.stringify(bestStickmanP2.brain);
 
     logP1.push(bestStickmanP1.getLog());
-    logP2.push(bestStickmanP2.getLog());
 }
 
 function discardModel() {
     brainModelStorageP1 = undefined;
-    brainModelStorageP2 = undefined;
 }
 
 function resetModel() {
@@ -271,13 +251,13 @@ function clickInference() {
 
 function saveLog() {
     writer = createWriter('Log.json');
-    var log = {"p1": logP1, "p2": logP2};
+    var log = logP1
     writer.write(JSON.stringify(log));
     writer.close();
 }
 
 function saveModelObj() {
     writer = createWriter('Model.json');
-    writer.write(brainModelStorageP2);
+    writer.write(brainModelStorageP1);
     writer.close();
 }

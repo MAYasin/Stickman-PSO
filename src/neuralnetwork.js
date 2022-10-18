@@ -28,15 +28,21 @@ class Layer {
         this.biases = new Array(outputSize);
 
         this.weights = [];
-        this.velocity = [];
+        this.velocityW = [];
+
+        this.velocityB = new Array(outputSize);
+        for (let i = 0; i < outputSize; i++) {
+            this.velocityB[i] = 0;
+        }
+
 
         for (let i = 0; i < inputSize; i++) {
-            this.velocity[i] = new Array(outputSize);
+            this.velocityW[i] = new Array(outputSize);
         }
 
         for (let i = 0; i < inputSize; i++) {
             for (let j = 0; j < outputSize; j++) {
-                this.velocity[i][j] = 0;
+                this.velocityW[i][j] = 0;
             }
         }
 
@@ -55,7 +61,7 @@ class Layer {
         }
 
         for (let i = 0; i < layer.biases.length; i++) {
-            layer.biases[i] = 0;
+            layer.biases[i] = Math.random() * 2 - 1;
         }
     }
 

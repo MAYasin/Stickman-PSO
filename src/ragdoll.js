@@ -96,16 +96,24 @@ class Ragdoll {
 
     static velocityUpdate(ragdoll, network) {
         for (let x = 0; x < network.layers.length; x++) {
-            for (let i = 0; i < network.layers[x].velocity.length; i++) {
-                for (let j = 0; j < network.layers[x].velocity[i].length; j++) {
-                    network.layers[x].velocity[i][j] = (network.layers[x].velocity[i][j] * network.inertiaWeight) + (network.cognitveWeight * Math.random() * (ragdoll.pBest.network.layers[x].weights[i][j] - network.layers[x].weights[i][j])) + (network.socialWeight * Math.random() * (ragdoll.gBest.network.layers[x].weights[i][j] - network.layers[x].weights[i][j]));
+            for (let i = 0; i < network.layers[x].velocityW.length; i++) {
+                for (let j = 0; j < network.layers[x].velocityW[i].length; j++) {
+                    network.layers[x].velocityW[i][j] = (network.layers[x].velocityW[i][j] * network.inertiaWeight) + (network.cognitveWeight * Math.random() * (ragdoll.pBest.network.layers[x].weights[i][j] - network.layers[x].weights[i][j])) + (network.socialWeight * Math.random() * (ragdoll.gBest.network.layers[x].weights[i][j] - network.layers[x].weights[i][j]));
                 }
             }
 
             for (let i = 0; i < network.layers[x].weights.length; i++) {
                 for (let j = 0; j < network.layers[x].weights[i].length; j++) {
-                    network.layers[x].weights[i][j] = network.layers[x].weights[i][j] + network.layers[x].velocity[i][j];
+                    network.layers[x].weights[i][j] = network.layers[x].weights[i][j] + network.layers[x].velocityW[i][j];
                 }
+            }
+
+            for (let i = 0; i < network.layers[x].velocityB.length; i++) {
+                network.layers[x].velocityB[i] = (network.layers[x].velocityB[i] * network.inertiaWeight) + (network.cognitveWeight * Math.random() * (ragdoll.pBest.network.layers[x].biases[i] - network.layers[x].biases[i])) + (network.socialWeight * Math.random() * (ragdoll.gBest.network.layers[x].biases[i] - network.layers[x].biases[i]));
+            }
+
+            for (let i = 0; i < network.layers[x].biases.length; i++) {
+                network.layers[x].biases[i] = network.layers[x].biases[i] + network.layers[x].velocityB[i];
             }
         }
     }

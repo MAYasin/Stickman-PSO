@@ -10,6 +10,9 @@ class Ragdoll {
         this.yScore = 0;
         this.brain = new NeuralNetwork([9, 8, 2]);
 
+        this.pBest = { fitness: 0, network: this.brain };
+        this.gBest = { fitness: 0, network: this.brain };
+
         this.torso = new Box(this.x, this.y, 20, 60, bounds, customOption);
         this.head = new Head(this.x, this.y - 50, 18, bounds, customOption);
         this.rhand = new Box(this.x + 25, this.y - 10, 30, 4, bounds, customOption);
@@ -79,6 +82,34 @@ class Ragdoll {
         this.resetTransparency();
     }
 
+    static scoreUpdate(ragdoll, oNetwork, score) {
+        if (score > ragdoll.pBest.fitness) {
+            ragdoll.pBest.fitness = score;
+            ragdoll.pBest.network = oNetwork;
+        }
+
+        if (score > ragdoll.gBest.fitness) {
+            ragdoll.gBest.fitness = score;
+            ragdoll.gBest.network = oNetwork;
+        }
+    }
+
+    static velocityUpdate(ragdoll, network) {
+        for (let x = 0; x < network.layers.length; x++) {
+            for (let i = 0; i < network.layers[x].velocity.length; i++) {
+                for (let j = 0; j < network.layers[x].velocity[i].length; j++) {
+                    network.layers[x].velocity[i][j] = (network.layers[x].velocity[i][j] * network.inertiaWeight) + (network.cognitveWeight * Math.random() * (ragdoll.pBest.network.layers[x].weights[i][j] - network.layers[x].weights[i][j])) + (network.socialWeight * Math.random() * (ragdoll.gBest.network.layers[x].weights[i][j] - network.layers[x].weights[i][j]));
+                }
+            }
+
+            for (let i = 0; i < network.layers[x].weights.length; i++) {
+                for (let j = 0; j < network.layers[x].weights[i].length; j++) {
+                    network.layers[x].weights[i][j] = network.layers[x].weights[i][j] + network.layers[x].velocity[i][j];
+                }
+            }
+        }
+    }
+
     setTransparency(alpha) {
         this.torso.transparency = alpha;
         this.head.transparency = alpha;
@@ -144,7 +175,7 @@ class Ragdoll {
         if (!this.dead) {
             this.xScore = this.torso.body.position.x - this.x;
             this.yScore = this.torso.body.position.y;
-            if(this.yScore < 438){
+            if (this.yScore < 438) {
                 this.yScore = 0;
             }
             const outputs = NeuralNetwork.feedForward([roundTo(this.lleg.angle, 2), roundTo(this.lleg.angularSpeed, 2), this.lleg.collided ? 1 : 0, roundTo(this.lleg.distanceToGround, 2), roundTo(this.torso.angle, 2), roundTo(this.rleg.angle, 2), roundTo(this.rleg.angularSpeed, 2), this.rleg.collided ? 1 : 0, roundTo(this.rleg.distanceToGround, 2)], this.brain)

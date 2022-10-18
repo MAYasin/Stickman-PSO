@@ -159,8 +159,8 @@ function draw() {
 
                     if (brainModelStorageP1 != undefined) {
                         stickmen.forEach((element, index) => {
-                            NeuralNetwork.scoreUpdate(JSON.parse(brainModelStorageP1), bestStickmanP1.xScore);
-                            NeuralNetwork.velocityUpdate(element.brain);
+                            Ragdoll.scoreUpdate(element,JSON.parse(brainModelStorageP1), bestStickmanP1.xScore);
+                            Ragdoll.velocityUpdate(element, element.brain);
                         });
                     }
                 } else {

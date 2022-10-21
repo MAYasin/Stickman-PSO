@@ -152,18 +152,21 @@ function draw() {
                 genCount += 1;
 
                 saveModel();
-                resetModel();
 
                 if (!stoppingAlgo) {
-                    stickmen = generateStickmen(slider.value() == 0 ? 2 : slider.value(), new Date());
+                    //stickmen = generateStickmen(slider.value() == 0 ? 2 : slider.value(), new Date());
 
                     if (brainModelStorageP1 != undefined) {
                         stickmen.forEach((element, index) => {
-                            Ragdoll.scoreUpdate(element,JSON.parse(brainModelStorageP1), bestStickmanP1.xScore);
-                            Ragdoll.velocityUpdate(element, element.brain);
+                            element.pBestUpdate()
+                            element.gBestUpdate(JSON.parse(brainModelStorageP1), bestStickmanP1.xScore)
+                            element.velocityUpdate();
+
+                            element.reset(80, height / 1.4, bounds, customOption, new Date(), genCount)
                         });
                     }
                 } else {
+                    resetModel();
                     stoppingAlgo = false;
                     genCount = 0;
                     modetext = "Idle";

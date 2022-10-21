@@ -82,38 +82,122 @@ class Ragdoll {
         this.resetTransparency();
     }
 
-    static scoreUpdate(ragdoll, oNetwork, score) {
-        if (score > ragdoll.pBest.fitness) {
-            ragdoll.pBest.fitness = score;
-            ragdoll.pBest.network = oNetwork;
-        }
+    reset(x, y, bounds, customOption, starttime, generation){
+        this.removeFromWorld();
+        
+        this.x = x;
+        this.y = y;
+        this.dead = false;
+        this.starttime = starttime;
+        this.generation = generation;
+        this.deathtime;
 
-        if (score > ragdoll.gBest.fitness) {
-            ragdoll.gBest.fitness = score;
-            ragdoll.gBest.network = oNetwork;
+        this.torso = new Box(this.x, this.y, 20, 60, bounds, customOption);
+        this.head = new Head(this.x, this.y - 50, 18, bounds, customOption);
+        this.rhand = new Box(this.x + 25, this.y - 10, 30, 4, bounds, customOption);
+        this.lhand = new Box(this.x - 25, this.y - 10, 30, 4, bounds, customOption);
+        this.rleg = new Box(this.x + 10, this.y + 50, 8, 40, bounds, customOption);
+        this.lleg = new Box(this.x - 10, this.y + 50, 8, 40, bounds, customOption);
+
+        this.inferenceMode = false;
+
+        this.torsoToHead = Constraint.create({
+            bodyA: this.torso.body,
+            bodyB: this.head.body,
+            pointA: { x: 0, y: -30 },
+            pointB: { x: 0, y: 18 },
+            stiffness: 1,
+        });
+
+        this.torsoToHeadA = Constraint.create({
+            bodyA: this.torso.body,
+            bodyB: this.head.body,
+            pointA: { x: 0, y: 0 },
+            pointB: { x: 0, y: 0 },
+            stiffness: 1,
+        });
+
+        this.torsoToRhand = Constraint.create({
+            bodyA: this.torso.body,
+            bodyB: this.rhand.body,
+            pointA: { x: 10, y: -10 },
+            pointB: { x: -15, y: 0 },
+            stiffness: 0.6,
+        });
+        this.torsoToLhand = Constraint.create({
+            bodyA: this.torso.body,
+            bodyB: this.lhand.body,
+            pointA: { x: -10, y: -10 },
+            pointB: { x: 15, y: 0 },
+            stiffness: 0.6,
+        });
+
+        this.torsoToRleg = Constraint.create({
+            bodyA: this.torso.body,
+            bodyB: this.rleg.body,
+            pointA: { x: 10, y: 30 },
+            pointB: { x: 0, y: -20 },
+            stiffness: 0.6,
+        });
+        this.torsoToLleg = Constraint.create({
+            bodyA: this.torso.body,
+            bodyB: this.lleg.body,
+            pointA: { x: -10, y: 30 },
+            pointB: { x: 0, y: -20 },
+            stiffness: 0.6,
+        });
+
+        this.legToLeg = Constraint.create({
+            bodyA: this.lleg.body,
+            bodyB: this.rleg.body,
+            stiffness: 0.01,
+        });
+
+        this.fullbody = Composite.add(world, [
+            this.torsoToHead, this.torsoToHeadA, this.torsoToRhand, this.torsoToLhand, this.torsoToRleg, this.torsoToLleg, this.legToLeg
+        ]
+        );
+
+        this.resetTransparency();
+    }
+
+    gBestUpdate(oNetwork, score) {
+        if (score > this.gBest.fitness) {
+            this.gBest.fitness = score;
+            this.gBest.network = oNetwork;
         }
     }
 
-    static velocityUpdate(ragdoll, network) {
-        for (let x = 0; x < network.layers.length; x++) {
-            for (let i = 0; i < network.layers[x].velocityW.length; i++) {
-                for (let j = 0; j < network.layers[x].velocityW[i].length; j++) {
-                    network.layers[x].velocityW[i][j] = (network.layers[x].velocityW[i][j] * network.inertiaWeight) + (network.cognitveWeight * Math.random() * (ragdoll.pBest.network.layers[x].weights[i][j] - network.layers[x].weights[i][j])) + (network.socialWeight * Math.random() * (ragdoll.gBest.network.layers[x].weights[i][j] - network.layers[x].weights[i][j]));
+    pBestUpdate() {
+        if (this.xScore > this.pBest.fitness) {
+            this.pBest.fitness = this.xScore;
+            this.pBest.network = this.brain;
+        }
+
+        this.xScore = 0;
+        this.yScore = 0;
+    }
+
+    velocityUpdate() {
+        for (let x = 0; x < this.brain.layers.length; x++) {
+            for (let i = 0; i < this.brain.layers[x].velocityW.length; i++) {
+                for (let j = 0; j < this.brain.layers[x].velocityW[i].length; j++) {
+                    this.brain.layers[x].velocityW[i][j] = (this.brain.layers[x].velocityW[i][j] * this.brain.inertiaWeight) + (this.brain.cognitveWeight * Math.random() * (this.pBest.network.layers[x].weights[i][j] - this.brain.layers[x].weights[i][j])) + (this.brain.socialWeight * Math.random() * (this.gBest.network.layers[x].weights[i][j] - this.brain.layers[x].weights[i][j]));
                 }
             }
 
-            for (let i = 0; i < network.layers[x].weights.length; i++) {
-                for (let j = 0; j < network.layers[x].weights[i].length; j++) {
-                    network.layers[x].weights[i][j] = network.layers[x].weights[i][j] + network.layers[x].velocityW[i][j];
+            for (let i = 0; i < this.brain.layers[x].weights.length; i++) {
+                for (let j = 0; j < this.brain.layers[x].weights[i].length; j++) {
+                    this.brain.layers[x].weights[i][j] = this.brain.layers[x].weights[i][j] + this.brain.layers[x].velocityW[i][j];
                 }
             }
 
-            for (let i = 0; i < network.layers[x].velocityB.length; i++) {
-                network.layers[x].velocityB[i] = (network.layers[x].velocityB[i] * network.inertiaWeight) + (network.cognitveWeight * Math.random() * (ragdoll.pBest.network.layers[x].biases[i] - network.layers[x].biases[i])) + (network.socialWeight * Math.random() * (ragdoll.gBest.network.layers[x].biases[i] - network.layers[x].biases[i]));
+            for (let i = 0; i < this.brain.layers[x].velocityB.length; i++) {
+                this.brain.layers[x].velocityB[i] = (this.brain.layers[x].velocityB[i] * this.brain.inertiaWeight) + (this.brain.cognitveWeight * Math.random() * (this.pBest.network.layers[x].biases[i] - this.brain.layers[x].biases[i])) + (this.brain.socialWeight * Math.random() * (this.gBest.network.layers[x].biases[i] - this.brain.layers[x].biases[i]));
             }
 
-            for (let i = 0; i < network.layers[x].biases.length; i++) {
-                network.layers[x].biases[i] = network.layers[x].biases[i] + network.layers[x].velocityB[i];
+            for (let i = 0; i < this.brain.layers[x].biases.length; i++) {
+                this.brain.layers[x].biases[i] = this.brain.layers[x].biases[i] + this.brain.layers[x].velocityB[i];
             }
         }
     }
